@@ -14,8 +14,6 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellUtil;
 
-import com.openxcell.util.RegExUtils;
-
 /**
  * @author vicky.thakor
  * @since 2018-05-15
@@ -150,6 +148,11 @@ public class SpreadSheetUtil {
 	 * 
 	 * @author vicky.thakor
 	 * @date 9th April, 2015
+	 * 
+	 * @change use `format_cell_value` to change the type of cell
+	 * @author vicky.thakor
+	 * @since 2018-05-31
+	 * 
 	 * @param {@link
 	 * 			Object}
 	 * @return {@link ExcelCellType}
@@ -162,13 +165,13 @@ public class SpreadSheetUtil {
 		} else if (value instanceof Date) {
 			return ExcelCellType.DATE;
 		} else {
-			if(Objects.nonNull(value) && RegExUtils.isInteger(String.valueOf(value))) {
-				return ExcelCellType.INTEGER;
-			}else if(Objects.nonNull(value) && RegExUtils.isFloatingNumber(String.valueOf(value))) {
-				return ExcelCellType.FLOAT;
-			}else {
+//			if(Objects.nonNull(value) && RegExUtils.isInteger(String.valueOf(value))) {
+//				return ExcelCellType.INTEGER;
+//			}else if(Objects.nonNull(value) && RegExUtils.isFloatingNumber(String.valueOf(value))) {
+//				return ExcelCellType.FLOAT;
+//			}else {
 				return ExcelCellType.TEXT;
-			}
+//			}
 		}
 	}
 }
