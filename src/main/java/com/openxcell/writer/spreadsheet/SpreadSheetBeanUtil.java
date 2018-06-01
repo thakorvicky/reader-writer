@@ -19,6 +19,10 @@ import com.openxcell.writer.spreadsheet.SpreadSheetUtil.ExcelCellType;
 /**
  * @author vicky.thakor
  * @since 2018-05-15
+ * 
+ * @change code optimization
+ * @author vicky.thakor
+ * @since 2018-06-01
  */
 public class SpreadSheetBeanUtil {
 	/* Object caching */
@@ -50,9 +54,9 @@ public class SpreadSheetBeanUtil {
 	 */
 	Pattern patternExpression = Pattern.compile(regExStringExpresions);
 
-	private SpreadSheetTemplate excelCriteria;
+	private SpreadSheetTemplate spreadSheetTemplate;
 
-	private SpreadSheetManager excelManager;
+	private SpreadSheetManager spreadSheetManager;
 
 	/* Preserve original column property value (i.e Item.itemStore.store.name) */
 	private String originalColumnProperty;
@@ -65,12 +69,9 @@ public class SpreadSheetBeanUtil {
 		this.originalColumnProperty = originalColumnProperty;
 	}
 
-	public void usingExcelCriteria(SpreadSheetTemplate excelCriteria) {
-		this.excelCriteria = excelCriteria;
-	}
-
-	public void usingExcelManager(SpreadSheetManager excelManager) {
-		this.excelManager = excelManager;
+	public void usingExcelManager(SpreadSheetManager spreadSheetManager) {
+		this.spreadSheetManager = spreadSheetManager;
+		this.spreadSheetTemplate = spreadSheetManager.getSpreadSheetTemplate();
 	}
 
 	/**
@@ -430,12 +431,12 @@ public class SpreadSheetBeanUtil {
 	 * @return
 	 */
 	private Object doReplace(String columnProperty, Object columnValue) {
-		if (Objects.nonNull(excelCriteria.getReplace()) && excelCriteria.getReplace().has(columnProperty)) {
-			JSONObject replaceValues = excelCriteria.getReplace().optJSONObject(columnProperty);
+		if (Objects.nonNull(spreadSheetTemplate.getReplace()) && spreadSheetTemplate.getReplace().has(columnProperty)) {
+			JSONObject replaceValues = spreadSheetTemplate.getReplace().optJSONObject(columnProperty);
 
 			if (replaceValues == null) {
 				/* When calculating value of columnName in collectionDataFormat. */
-				excelCriteria.getReplace().optJSONObject(columnProperty);
+				spreadSheetTemplate.getReplace().optJSONObject(columnProperty);
 			}
 
 			if (Objects.nonNull(replaceValues) && replaceValues.has(String.valueOf(columnValue))) {
@@ -454,8 +455,8 @@ public class SpreadSheetBeanUtil {
 	 */
 	private Object doFormat(String columnProperty, Object columnValue) {
 		if (!String.valueOf(columnValue).trim().isEmpty()) {
-			if (Objects.nonNull(excelCriteria.getFormatCellValue()) && excelCriteria.getFormatCellValue().has(columnProperty)) {
-				String formatType = excelCriteria.getFormatCellValue().optString(columnProperty);
+			if (Objects.nonNull(spreadSheetTemplate.getFormatCellValue()) && spreadSheetTemplate.getFormatCellValue().has(columnProperty)) {
+				String formatType = spreadSheetTemplate.getFormatCellValue().optString(columnProperty);
 				if (ExcelCellType.INTEGER.toString().equalsIgnoreCase(formatType)) {
 					columnValue = Integer.valueOf(String.valueOf(columnValue));
 				} else if (ExcelCellType.FLOAT.toString().equalsIgnoreCase(formatType)) {
@@ -515,8 +516,8 @@ public class SpreadSheetBeanUtil {
 	private Object collectionColumnNameColumnValue(String columnName, Object columnValue) {
 		/* Multi-Warehouse changes 28/03/2016 */
 		if (!"#ColumnName".equalsIgnoreCase(columnName)) {
-			excelManager.addHeader(columnName);
-			excelManager.addValueCell(columnName, columnValue);
+			spreadSheetManager.addHeader(columnName);
+			spreadSheetManager.addValueCell(columnName, columnValue);
 			columnValue = "#ColumnValue";
 		}
 		return columnValue;

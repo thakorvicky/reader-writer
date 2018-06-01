@@ -22,10 +22,15 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import com.openxcell.io.FileHolder;
+import com.openxcell.util.JSONUtils;
 
 /**
  * @author vicky.thakor
  * @since 2018-05-15
+ * 
+ * @change wrap cell text
+ * @author vicky.thakor
+ * @since 2018-06-01
  */
 public class SpreadSheetManager {
 	private static Logger logger = Logger.getLogger(SpreadSheetManager.class.getName());
@@ -57,19 +62,30 @@ public class SpreadSheetManager {
 	private Map<String, Short> headerBackgroundColor;
 	private Map<String, Short> headerTextColor;
 
+	private SpreadSheetTemplate spreadSheetTemplate;
 	private List<String> summationBeforeNewSheet = new ArrayList<>(0);
+	private List<String> wrapTextHeaders = new ArrayList<>();
 
 	/* Build new workbook */
-	public void buildWorkbook() {
+	public void buildWorkbook(SpreadSheetTemplate spreadSheetTemplate) {
 		if (enableStream) {
 			workbook = new SXSSFWorkbook(streamRowBuffer);
 			((SXSSFWorkbook) workbook).setCompressTempFiles(true);
 		} else {
 			workbook = new SXSSFWorkbook(-1);
 		}
-
+		
+		this.spreadSheetTemplate = spreadSheetTemplate;
 		dataFormat = workbook.createDataFormat();
 		cellStyle = workbook.createCellStyle();
+		
+		if (Objects.nonNull(spreadSheetTemplate.getSummationHeaders())) {
+			summationBeforeNewSheet = JSONUtils.JSONArrayToList(String.class, spreadSheetTemplate.getSummationHeaders());
+		}
+		
+		if(Objects.nonNull(spreadSheetTemplate.getWrapTextHeaders())) {
+			wrapTextHeaders = JSONUtils.JSONArrayToList(String.class, spreadSheetTemplate.getWrapTextHeaders());
+		}
 	}
 
 	/**
@@ -97,7 +113,7 @@ public class SpreadSheetManager {
 			sheet = workbook.createSheet("Sheet " + sheetCount);
 			sheet.trackAllColumnsForAutoSizing();
 			
-			headerRow = sheet.createRow(sheetRowCount);
+			headerRow = createRow(sheetRowCount);
 
 			if (freezeHeader) {
 				sheet.createFreezePane(0, 1);
@@ -155,7 +171,7 @@ public class SpreadSheetManager {
 		}
 		sheet.trackColumnForAutoSizing(columnCount);
 		SpreadSheetUtil.writeCell(workbook, headerRow, columnCount, header, font, dataFormat,
-				workbook.createCellStyle());
+				workbook.createCellStyle(), false);
 		return columnCount++;
 	}
 
@@ -249,7 +265,7 @@ public class SpreadSheetManager {
 			}
 		}
 
-		dataRow = sheet.createRow(sheetRowCount);
+		dataRow = createRow(sheetRowCount);
 		cellCount = 0;
 		sheetRowCount++;
 		workbookRowCount++;
@@ -274,7 +290,7 @@ public class SpreadSheetManager {
 	 * For internal purpose.
 	 */
 	private void lastRow() {
-		dataRow = sheet.createRow(sheetRowCount);
+		dataRow = createRow(sheetRowCount);
 		cellCount = 0;
 		sheetRowCount++;
 		workbookRowCount++;
@@ -293,7 +309,7 @@ public class SpreadSheetManager {
 	 * @param value
 	 */
 	public void addValueCell(int index, Object value) {
-		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle);
+		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle, headers.values().contains(index));
 	}
 	
 	/**
@@ -302,7 +318,7 @@ public class SpreadSheetManager {
 	public void addValueCell(String header, Object value) {
 		if (dataRow != null) {
 			if (headers != null && headers.containsKey(header)) {
-				SpreadSheetUtil.writeCell(workbook, dataRow, headers.get(header), value, null, dataFormat, cellStyle);
+				SpreadSheetUtil.writeCell(workbook, dataRow, headers.get(header), value, null, dataFormat, cellStyle, wrapTextHeaders.contains(header));
 			}
 		} else {
 			throw new RuntimeException("Initialize row");
@@ -329,15 +345,6 @@ public class SpreadSheetManager {
 			SpreadSheetUtil.writeFormulaCell(workbook, dataRow, propertyPosition, summationFormula, null,
 					HSSFDataFormat.getBuiltinFormat("#,##0.00"));
 		}
-	}
-
-	/**
-	 * Perform summation on given header before sheet change.
-	 * 
-	 * @param headers
-	 */
-	public void summationBeforeNewSheet(List<String> headers) {
-		summationBeforeNewSheet = headers;
 	}
 
 	/**
@@ -382,6 +389,19 @@ public class SpreadSheetManager {
 				workbook.close();
 			}
 		}
+	}
+
+	/**
+	 * @param rownum
+	 * @return
+	 */
+	private Row createRow(int rownum) {
+		Row row = sheet.createRow(rownum);
+		return row;
+	}
+	
+	public SpreadSheetTemplate getSpreadSheetTemplate() {
+		return spreadSheetTemplate;
 	}
 	
 	public int getWorkbookRowCount() {

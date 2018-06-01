@@ -76,12 +76,17 @@ public class SpreadSheetUtil {
 	 * 
 	 * @author vicky.thakor
 	 * @date 9th April, 2015
+	 * 
+	 * @change wrap text
+	 * @author vicky.thakor
+	 * @since 2018-06-01
+	 * 
 	 * @param row
 	 * @param column
 	 * @param value
 	 */
 	public static void writeCell(Workbook workbook, Row row, int column, Object value, Font font, DataFormat dataFormat,
-			CellStyle cellStyle) {
+			CellStyle cellStyle, boolean wrapText) {
 		if (value == null)
 			return;
 		// change because of xlsx-stream reader library
@@ -98,7 +103,7 @@ public class SpreadSheetUtil {
 			}
 			
 			cellStyle.setVerticalAlignment(VerticalAlignment.TOP);
-//			cellStyle.setWrapText(true);
+			cellStyle.setWrapText(wrapText);
 			objHSSFCell.setCellStyle(cellStyle);
 		}
 

@@ -8,6 +8,10 @@ import com.openxcell.util.StringUtils;
 /**
  * @author vicky.thakor
  * @since 2018-05-15
+ * 
+ * @change allow wrap text on header column's cell
+ * @author vicky.thakor
+ * @since 2018-06-01
  */
 public class SpreadSheetTemplate {
 	private JSONArray header;
@@ -20,6 +24,7 @@ public class SpreadSheetTemplate {
 	private JSONObject extendedReplace;
 	
 	private JSONObject formatCellValue;
+	private JSONArray wrapTextHeaders;
 
 	public SpreadSheetTemplate(String jsonTemplate) {
 		StringUtils.requireNonNullNotEmpty(jsonTemplate, "template can not be null or empty");
@@ -35,6 +40,7 @@ public class SpreadSheetTemplate {
 			extendedReplace = jsonObject.optJSONObject("extended_replace");
 			
 			formatCellValue = jsonObject.optJSONObject("format_cell_value");
+			wrapTextHeaders = jsonObject.optJSONArray("wrap_text_headers");
 		} catch (Exception e) {
 			throw e;
 		}
@@ -70,5 +76,9 @@ public class SpreadSheetTemplate {
 	
 	public JSONObject getFormatCellValue() {
 		return formatCellValue;
+	}
+	
+	public JSONArray getWrapTextHeaders() {
+		return wrapTextHeaders;
 	}
 }

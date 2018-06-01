@@ -15,12 +15,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.openxcell.util.CollectionUtils;
-import com.openxcell.util.JSONUtils;
 import com.openxcell.util.StringUtils;
 
 /**
  * @author vicky.thakor
  * @since 2018-05-15
+ * 
+ * @change provide {@link SpreadSheetTemplate} to {@link SpreadSheetManager} for wrap text and summation
+ * @author vicky.thakor
+ * @since 2018-06-01
  */
 public class SpreadSheetBeanManager extends SpreadSheetManager {
 	private static Logger logger = Logger.getLogger(SpreadSheetBeanManager.class.getName());
@@ -32,7 +35,7 @@ public class SpreadSheetBeanManager extends SpreadSheetManager {
 
 	public SpreadSheetBeanManager(SpreadSheetTemplate sheetTemplate) {
 		this.sheetTemplate = sheetTemplate;
-		buildWorkbook();
+		buildWorkbook(sheetTemplate);
 		freezeHeader();
 		boldHeader();
 		init();
@@ -40,12 +43,10 @@ public class SpreadSheetBeanManager extends SpreadSheetManager {
 
 	private void init() {
 		beanUtil = new SpreadSheetBeanUtil();
-		beanUtil.usingExcelCriteria(sheetTemplate);
 		beanUtil.usingExcelManager(this);
 	}
 
 	public boolean process(List<?> listData) {
-		summationProperties();
 		headerTextColor();
 		headerBackgroundColor();
 
@@ -123,15 +124,6 @@ public class SpreadSheetBeanManager extends SpreadSheetManager {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Attach summation column details to {@link ExcelManager}
-	 */
-	private void summationProperties() {
-		if (Objects.nonNull(sheetTemplate.getSummationHeaders())) {
-			summationBeforeNewSheet(JSONUtils.JSONArrayToList(String.class, sheetTemplate.getSummationHeaders()));
-		}
 	}
 
 	/**
