@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,7 @@ public class SpreadSheetManager {
 	private boolean boldHeader = false;
 
 	private Map<String, Integer> headers = new LinkedHashMap<>(0);
+	private Map<Integer, String> headerIndex = new HashMap<>();
 	private Map<String, Short> headerBackgroundColor;
 	private Map<String, Short> headerTextColor;
 
@@ -157,6 +159,7 @@ public class SpreadSheetManager {
 			/* Will be used when creating new sheet */
 			columnCount = headers.size();
 			headers.put(header, columnCount);
+			headerIndex.put(columnCount, header);
 		}
 
 		Font font = workbook.createFont();
@@ -309,7 +312,7 @@ public class SpreadSheetManager {
 	 * @param value
 	 */
 	public void addValueCell(int index, Object value) {
-		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle, headers.values().contains(index));
+		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle, doWrapText(index));
 	}
 	
 	/**
@@ -398,6 +401,20 @@ public class SpreadSheetManager {
 	private Row createRow(int rownum) {
 		Row row = sheet.createRow(rownum);
 		return row;
+	}
+	
+	/**
+	 * @param columnIndex
+	 * @return
+	 */
+	private boolean doWrapText(int columnIndex) {
+		if(headerIndex.containsKey(columnIndex)) {
+			if(columnIndex == 2) {
+				System.out.println("Wait here");
+			}
+			return wrapTextHeaders.contains(headerIndex.get(columnIndex));
+		}
+		return false;
 	}
 	
 	public SpreadSheetTemplate getSpreadSheetTemplate() {
