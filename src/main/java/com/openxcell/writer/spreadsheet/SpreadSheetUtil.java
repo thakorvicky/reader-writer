@@ -7,12 +7,19 @@ import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.Comment;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellUtil;
+
+import com.openxcell.util.StringUtils;
 
 /**
  * @author vicky.thakor
@@ -81,18 +88,22 @@ public class SpreadSheetUtil {
 	 * @author vicky.thakor
 	 * @since 2018-06-01
 	 * 
+	 * @change header comment
+	 * @author vicky.thakor
+	 * @since 2018-06-04
+	 * 
 	 * @param row
 	 * @param column
 	 * @param value
 	 */
 	public static void writeCell(Workbook workbook, Row row, int column, Object value, Font font, DataFormat dataFormat,
-			CellStyle cellStyle, boolean wrapText) {
+			CellStyle cellStyle, boolean wrapText, String cellComment) {
 		if (value == null)
 			return;
 		// change because of xlsx-stream reader library
 		String strValue = Objects.isNull(value) ? "" : String.valueOf(value);
 		/* Create cell with blank value */
-		Cell objHSSFCell = CellUtil.createCell(row, column, strValue);
+		Cell cell = CellUtil.createCell(row, column, strValue);
 		/* Determine the Format of value (i.e: Text, Number, Date, Float, etc...) */
 		ExcelCellType valueFormat = getValueFormat(value);
 
@@ -104,49 +115,83 @@ public class SpreadSheetUtil {
 			
 			cellStyle.setVerticalAlignment(VerticalAlignment.TOP);
 			cellStyle.setWrapText(wrapText);
-			objHSSFCell.setCellStyle(cellStyle);
+			cell.setCellStyle(cellStyle);
 		}
+		
+		cellComment(workbook, row, cell, cellComment);
 
 		switch (valueFormat) {
 		case TEXT:
-			objHSSFCell.setCellValue(value.toString());
+			cell.setCellValue(value.toString());
 			break;
 		case INTEGER:
 			try {
-				objHSSFCell.setCellValue(((Number) value).intValue());
+				cell.setCellValue(((Number) value).intValue());
 			} catch (Exception e) {
 				Integer integer = Integer.valueOf((String) value);
-				objHSSFCell.setCellValue((integer).intValue());
+				cell.setCellValue((integer).intValue());
 			}
-			CellUtil.setCellStyleProperty(objHSSFCell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("#,##0"));
+			CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("#,##0"));
 			break;
 		case FLOAT:
 			try {
-				objHSSFCell.setCellValue(((Number) value).doubleValue());
+				cell.setCellValue(((Number) value).doubleValue());
 			} catch (Exception e) {
 				Float floatNumber = Float.valueOf((String) value);
-				objHSSFCell.setCellValue(floatNumber.doubleValue());
+				cell.setCellValue(floatNumber.doubleValue());
 			}
-			CellUtil.setCellStyleProperty(objHSSFCell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("#,##0.00"));
+			CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("#,##0.00"));
 			break;
 		case DATE:
-			objHSSFCell.setCellValue((Date) value);
-			CellUtil.setCellStyleProperty(objHSSFCell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("m/d/yy"));
+			cell.setCellValue((Date) value);
+			CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("m/d/yy"));
 			break;
 		case MONEY:
-			objHSSFCell.setCellValue(((Number) value).intValue());
-			CellUtil.setCellStyleProperty(objHSSFCell, CellUtil.DATA_FORMAT, dataFormat.getFormat("$#,##0.00;$#,##0.00"));
+			cell.setCellValue(((Number) value).intValue());
+			CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, dataFormat.getFormat("$#,##0.00;$#,##0.00"));
 			break;
 		case PERCENTAGE:
-			objHSSFCell.setCellValue(((Number) value).doubleValue());
-			CellUtil.setCellStyleProperty(objHSSFCell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("0.00%"));
+			cell.setCellValue(((Number) value).doubleValue());
+			CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, HSSFDataFormat.getBuiltinFormat("0.00%"));
 			break;
 		default:
-			objHSSFCell.setCellValue(value.toString());
+			cell.setCellValue(value.toString());
 			break;
 		}
 	}
 
+	/**
+	 * @author vicky.thakor
+	 * @since 2018-06-01
+	 * 
+	 * @param workbook
+	 * @param row
+	 * @param cell
+	 * @param strComment
+	 */
+	private static void cellComment(Workbook workbook, Row row, Cell cell, String strComment) {
+		if(StringUtils.nonNullNotEmpty(strComment)) {
+			CreationHelper factory = workbook.getCreationHelper();
+			Drawing drawing = cell.getSheet().createDrawingPatriarch();
+			
+			// When the comment box is visible, have it show in a 1x3 space
+			ClientAnchor anchor = factory.createClientAnchor();
+			anchor.setCol1(cell.getColumnIndex());
+			anchor.setCol2(cell.getColumnIndex()+1);
+			anchor.setRow1(row.getRowNum());
+			anchor.setRow2(row.getRowNum()+5);
+			
+			// Create the comment and set the text+author
+			Comment comment = drawing.createCellComment(anchor);
+			RichTextString str = factory.createRichTextString(strComment);
+			comment.setString(str);
+			comment.setAuthor("Orderhive");
+			
+			// Assign the comment to the cell
+			cell.setCellComment(comment);
+		}
+	}
+	
 	/**
 	 * To identify the format of value (i.e: Number, Float, Date, etc...).<br/>
 	 * <br/>

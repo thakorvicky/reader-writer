@@ -149,6 +149,10 @@ public class SpreadSheetManager {
 
 	/**
 	 * Add header to current sheet
+	 * 
+	 * @change comment on header
+	 * @author vicky.thakor
+	 * @since 2018-06-04
 	 */
 	public int addHeader(String header) {
 		prepareSheet();
@@ -173,8 +177,14 @@ public class SpreadSheetManager {
 			font.setBold(true);
 		}
 		sheet.trackColumnForAutoSizing(columnCount);
+		
+		String comment = null;
+		if(Objects.nonNull(spreadSheetTemplate.getHeaderComment())) {
+			comment = spreadSheetTemplate.getHeaderComment().optString(header);
+		}
+		
 		SpreadSheetUtil.writeCell(workbook, headerRow, columnCount, header, font, dataFormat,
-				workbook.createCellStyle(), false);
+				workbook.createCellStyle(), false, comment);
 		return columnCount++;
 	}
 
@@ -312,7 +322,7 @@ public class SpreadSheetManager {
 	 * @param value
 	 */
 	public void addValueCell(int index, Object value) {
-		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle, doWrapText(index));
+		SpreadSheetUtil.writeCell(workbook, dataRow, index, value, null, dataFormat, cellStyle, doWrapText(index), null);
 	}
 	
 	/**
@@ -321,7 +331,7 @@ public class SpreadSheetManager {
 	public void addValueCell(String header, Object value) {
 		if (dataRow != null) {
 			if (headers != null && headers.containsKey(header)) {
-				SpreadSheetUtil.writeCell(workbook, dataRow, headers.get(header), value, null, dataFormat, cellStyle, wrapTextHeaders.contains(header));
+				SpreadSheetUtil.writeCell(workbook, dataRow, headers.get(header), value, null, dataFormat, cellStyle, wrapTextHeaders.contains(header), null);
 			}
 		} else {
 			throw new RuntimeException("Initialize row");
