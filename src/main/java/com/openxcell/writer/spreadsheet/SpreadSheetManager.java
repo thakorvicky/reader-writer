@@ -419,9 +419,6 @@ public class SpreadSheetManager {
 	 */
 	private boolean doWrapText(int columnIndex) {
 		if(headerIndex.containsKey(columnIndex)) {
-			if(columnIndex == 2) {
-				System.out.println("Wait here");
-			}
 			return wrapTextHeaders.contains(headerIndex.get(columnIndex));
 		}
 		return false;
